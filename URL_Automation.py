@@ -82,5 +82,10 @@ output_path = "output_screenshots.docx"
 doc.save(output_path)
 print(f"Document saved as {output_path}")
 
-# Cleanup
-driver.quit()
+# Keep the browser open after script execution
+print("Browser will remain open. Press Ctrl+C to exit the script and close the browser.")
+try:
+    while True:
+        sleep(1)  # Keep the script alive
+except KeyboardInterrupt:
+    print("Exiting script. The browser will remain open.")
