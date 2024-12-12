@@ -2,6 +2,8 @@ import os
 from selenium import webdriver
 from time import sleep
 from docx import Document
+from PIL import Image  # Pillow for image resizing
+from docx.shared import Inches
 
 # Prompt the user to enter URLs line by line
 print("Enter the list of URLs (one URL per line). Press Enter twice to finish:")
@@ -17,16 +19,14 @@ if not urls:
     print("No URLs entered. Exiting.")
     exit()
 
-
 # Add appropriate suffixes for Studentapi, IntegrationApi, etranscriptApi, and BannerAccess Mgmt URLs
 for i in range(len(urls)):
     if urls[i].endswith("StudentApi") or urls[i].endswith("StudentAPI") or urls[i].endswith("IntegrationApi") or urls[i].endswith("IntegrationAPI"):
         urls[i] += "/api/about"
-    elif urls[i].endswith("eTranscriptAPI") or urls[i].endswith("eTranscriptApi"):        
+    elif urls[i].endswith("eTranscriptAPI") or urls[i].endswith("eTranscriptApi"):
         urls[i] += "/status/system-details"
     elif "bam-direct" in urls[i] and urls[i].endswith("BannerAccessMgmt"):
         urls[i] += ".ws/saml/login"
-
 
 # Setup Selenium WebDriver for Chrome in incognito mode
 options = webdriver.ChromeOptions()
@@ -49,18 +49,33 @@ sleep(15)
 
 # Create a Word document
 doc = Document()
-screenshot_dir = "screenshots"
+screenshot_dir = "TEMP_screenshots"
 os.makedirs(screenshot_dir, exist_ok=True)
+
+# Maximum width for images in the Word document (e.g., 6 inches)
+max_width = Inches(6)
 
 # Switch to each tab and take a screenshot
 for i, handle in enumerate(driver.window_handles):
     driver.switch_to.window(handle)
-    sleep(2)  # Optional: Wait for any dynamic content to finish loading
+    sleep(1)  # Optional: Wait for any dynamic content to finish loading
     screenshot_path = os.path.join(screenshot_dir, f"screenshot_{i+1}.png")
     driver.save_screenshot(screenshot_path)
-    doc.add_picture(screenshot_path)
+
+    # Open the screenshot with Pillow to resize it
+    with Image.open(screenshot_path) as img:
+        # Calculate the maximum dimensions in pixels
+        max_width_pixels = int(max_width)  # idk what this line does, but the whole program breaks when i try to change it
+        max_height_pixels = int(max_width_pixels * (img.height / img.width))  # Maintain aspect ratio
+        
+        # Resize the image using thumbnail (in-place)
+        img.thumbnail((max_width_pixels, max_height_pixels), Image.LANCZOS)  # Efficient resizing
+        img.save(screenshot_path)  # Save the resized image
+
+    # Add the resized image to the Word document
+    doc.add_picture(screenshot_path, width=max_width_pixels)
     doc.add_page_break()
-    print(f"Captured screenshot for tab {i+1}")
+    print(f"Captured and resized screenshot for tab {i+1}")
 
 # Save the Word document
 output_path = "output_screenshots.docx"
