@@ -84,32 +84,8 @@ for i, handle in enumerate(driver.window_handles):
     screenshot_path_before = os.path.join(screenshot_dir, f"screenshot_before_{i+1}.png")
     driver.save_screenshot(screenshot_path_before)
 
-    if "studentapi" in url.lower():
-        print(f"Handling API credentials for URL: {url}")
-
-        try:
-            # Enter API credentials in the browser prompt
-            alert = Alert(driver)
-            alert.send_keys(f"{api_username}\n{api_password}")
-            alert.accept()
-
-            sleep(3)  # Wait for 3 seconds after entering credentials
-
-            # Take a screenshot after entering credentials
-            screenshot_path_after = os.path.join(screenshot_dir, f"screenshot_after_{i+1}.png")
-            driver.save_screenshot(screenshot_path_after)
-
-            # Add both screenshots to the document
-            doc.add_picture(screenshot_path_before, width=max_width)
-
-            doc.add_picture(screenshot_path_after, width=max_width)
-        except Exception as e:
-            print(f"Failed to handle API credentials for URL {url}: {e}")
-    else:
-        # Add the single screenshot to the document
-        doc.add_picture(screenshot_path_before, width=max_width)
-        doc.add_paragraph("Screenshot without API credentials")
-
+    
+    doc.add_picture(screenshot_path_before, width=max_width)
     doc.add_page_break()
     print(f"Captured screenshots for tab {i+1}")
 
