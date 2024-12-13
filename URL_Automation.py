@@ -1,13 +1,19 @@
 import os
 import shutil
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.alert import Alert
 from time import sleep
 from docx import Document
 from PIL import Image  # Pillow for image resizing
 from docx.shared import Inches
 import pyautogui
 
-# Clear TEMP_screenshots folder and delete output_screenshots.docx
+# Prompt user for API user credentials
+api_username = input("Enter the API user username: ")
+api_password = input("Enter the API user password: ")
+
+# Clean up TEMP_screenshots folder and output_screenshots.docx
 screenshot_dir = "TEMP_screenshots"
 if os.path.exists(screenshot_dir):
     shutil.rmtree(screenshot_dir)  # Remove the folder and all its contents
@@ -31,15 +37,20 @@ if not urls:
     print("No URLs entered. Exiting.")
     exit()
 
-# Add appropriate suffixes for Studentapi, IntegrationApi, etranscriptApi, and BannerAccess Mgmt URLs
+# Add appropriate suffixes for specific URLs
 for i in range(len(urls)):
-    if urls[i].endswith("StudentApi") or urls[i].endswith("StudentAPI") or urls[i].endswith("IntegrationApi") or urls[i].endswith("IntegrationAPI"):
+    if "studentapi" in urls[i].lower() or "integrationapi" in urls[i].lower():
         urls[i] += "/api/about"
+        parsed_url = urls[i].split("://")
+        urls[i] = f"{parsed_url[0]}://{api_username}:{api_password}@{parsed_url[1]}"
+        #adding login credentials to the studentapi and integrationapi URLs, this avoids having to manually enter them
     elif urls[i].endswith("eTranscriptAPI") or urls[i].endswith("eTranscriptApi"):
         urls[i] += "/status/system-details"
     elif "bam-direct" in urls[i] and urls[i].endswith("BannerAccessMgmt"):
         urls[i] += ".ws/saml/login"
 
+
+print(urls)
 # Setup Selenium WebDriver for Chrome in incognito mode
 options = webdriver.ChromeOptions()
 options.add_argument("--incognito")
@@ -61,35 +72,46 @@ sleep(15)
 
 # Create a Word document
 doc = Document()
-
-# Maximum width for images in the Word document (e.g., 6 inches)
 max_width = Inches(6)
 
-# Switch to each tab and take a full-screen screenshot
+# Switch to each tab, handle API credentials if needed, and take screenshots
 for i, handle in enumerate(driver.window_handles):
     driver.switch_to.window(handle)
     sleep(1)  # Optional: Wait for any dynamic content to finish loading
-    screenshot_path = os.path.join(screenshot_dir, f"screenshot_{i+1}.png")
+    url = driver.current_url
 
-    # Capture the entire screen including the browser's search bar
-    screenshot = pyautogui.screenshot()
-    screenshot.save(screenshot_path)
+    # Take a screenshot before entering credentials
+    screenshot_path_before = os.path.join(screenshot_dir, f"screenshot_before_{i+1}.png")
+    driver.save_screenshot(screenshot_path_before)
 
-    # Open the screenshot with Pillow to resize it
-    with Image.open(screenshot_path) as img:
-        # Calculate the maximum dimensions in pixels
-        max_width_pixels = int(max_width)
-        aspect_ratio = img.height / img.width
-        max_height_pixels = int(max_width_pixels * aspect_ratio)
+    if "studentapi" in url.lower():
+        print(f"Handling API credentials for URL: {url}")
 
-        # Resize the image using thumbnail (in-place)
-        img.thumbnail((max_width_pixels, max_height_pixels), Image.LANCZOS)  # Efficient resizing
-        img.save(screenshot_path)  # Save the resized image
+        try:
+            # Enter API credentials in the browser prompt
+            alert = Alert(driver)
+            alert.send_keys(f"{api_username}\n{api_password}")
+            alert.accept()
 
-    # Add the resized image to the Word document
-    doc.add_picture(screenshot_path, width=max_width)
+            sleep(3)  # Wait for 3 seconds after entering credentials
+
+            # Take a screenshot after entering credentials
+            screenshot_path_after = os.path.join(screenshot_dir, f"screenshot_after_{i+1}.png")
+            driver.save_screenshot(screenshot_path_after)
+
+            # Add both screenshots to the document
+            doc.add_picture(screenshot_path_before, width=max_width)
+
+            doc.add_picture(screenshot_path_after, width=max_width)
+        except Exception as e:
+            print(f"Failed to handle API credentials for URL {url}: {e}")
+    else:
+        # Add the single screenshot to the document
+        doc.add_picture(screenshot_path_before, width=max_width)
+        doc.add_paragraph("Screenshot without API credentials")
+
     doc.add_page_break()
-    print(f"Captured and resized screenshot for tab {i+1}")
+    print(f"Captured screenshots for tab {i+1}")
 
 # Save the Word document
 doc.save(output_path)
