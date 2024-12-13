@@ -1,10 +1,21 @@
 import os
+import shutil
 from selenium import webdriver
 from time import sleep
 from docx import Document
 from PIL import Image  # Pillow for image resizing
 from docx.shared import Inches
 import pyautogui
+
+# Clear TEMP_screenshots folder and delete output_screenshots.docx
+screenshot_dir = "TEMP_screenshots"
+if os.path.exists(screenshot_dir):
+    shutil.rmtree(screenshot_dir)  # Remove the folder and all its contents
+os.makedirs(screenshot_dir, exist_ok=True)  # Recreate the folder
+
+output_path = "output_screenshots.docx"
+if os.path.exists(output_path):
+    os.remove(output_path)  # Delete the existing output file
 
 # Prompt the user to enter URLs line by line
 print("Enter the list of URLs (one URL per line). Press Enter twice to finish:")
@@ -50,12 +61,9 @@ sleep(15)
 
 # Create a Word document
 doc = Document()
-screenshot_dir = "TEMP_screenshots"
-os.makedirs(screenshot_dir, exist_ok=True)
 
 # Maximum width for images in the Word document (e.g., 6 inches)
 max_width = Inches(6)
-
 
 # Switch to each tab and take a full-screen screenshot
 for i, handle in enumerate(driver.window_handles):
@@ -84,7 +92,6 @@ for i, handle in enumerate(driver.window_handles):
     print(f"Captured and resized screenshot for tab {i+1}")
 
 # Save the Word document
-output_path = "output_screenshots.docx"
 doc.save(output_path)
 print(f"Document saved as {output_path}")
 
