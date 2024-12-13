@@ -49,8 +49,6 @@ for i in range(len(urls)):
     elif "bam-direct" in urls[i] and urls[i].endswith("BannerAccessMgmt"):
         urls[i] += ".ws/saml/login"
 
-
-print(urls)
 # Setup Selenium WebDriver for Chrome in incognito mode
 options = webdriver.ChromeOptions()
 options.add_argument("--incognito")
@@ -81,11 +79,12 @@ for i, handle in enumerate(driver.window_handles):
     url = driver.current_url
 
     # Take a screenshot before entering credentials
-    screenshot_path_before = os.path.join(screenshot_dir, f"screenshot_before_{i+1}.png")
-    driver.save_screenshot(screenshot_path_before)
-
+    screenshot_path = os.path.join(screenshot_dir, f"screenshot{i+1}.png")
+    #driver.save_screenshot(screenshot_path)
+    screenshot = pyautogui.screenshot()
+    screenshot.save(screenshot_path)
     
-    doc.add_picture(screenshot_path_before, width=max_width)
+    doc.add_picture(screenshot_path, width=max_width)
     doc.add_page_break()
     print(f"Captured screenshots for tab {i+1}")
 
