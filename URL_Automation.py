@@ -10,6 +10,8 @@ from docx.shared import Inches
 import pyautogui
 
 # Prompt user for API user credentials
+appnav_username = input("Enter the Test_creds username: ")
+appnav_password = input("Enter the Test_creds password: ")
 api_username = input("Enter the API user username: ")
 api_password = input("Enter the API user password: ")
 
@@ -46,9 +48,12 @@ for i in range(len(urls)):
         #adding login credentials to the studentapi and integrationapi URLs, this avoids having to manually enter them
     elif urls[i].endswith("eTranscriptAPI") or urls[i].endswith("eTranscriptApi"):
         urls[i] += "/status/system-details"
-    elif "bam-direct" in urls[i] and urls[i].endswith("BannerAccessMgmt"):
+    elif "banneradmin" in urls[i] and urls[i].endswith("BannerAccessMgmt"):
         urls[i] += ".ws/saml/login"
 
+
+for url in urls:
+    print(url)
 # Setup Selenium WebDriver for Chrome in incognito mode
 options = webdriver.ChromeOptions()
 options.add_argument("--incognito")
@@ -58,6 +63,12 @@ driver = webdriver.Chrome(options=options)  # Ensure ChromeDriver is in PATH or 
 # Open the Application Navigator URL
 print("Opening the Application Navigator. Please log in manually.")
 driver.get(urls[0])
+sleep(5)
+pyautogui.typewrite(appnav_username)
+pyautogui.typewrite("\n")
+sleep(3)
+pyautogui.typewrite(appnav_password)
+pyautogui.typewrite("\n")
 input("Press Enter after you have logged in successfully...")
 
 # Open all remaining URLs in new tabs
