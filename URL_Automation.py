@@ -3,6 +3,9 @@ import shutil
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.alert import Alert
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 from docx import Document
 from PIL import Image  # Pillow for image resizing
@@ -48,12 +51,17 @@ for i in range(len(urls)):
         #adding login credentials to the studentapi and integrationapi URLs, this avoids having to manually enter them
     elif urls[i].endswith("eTranscriptAPI") or urls[i].endswith("eTranscriptApi"):
         urls[i] += "/status/system-details"
+
+
     elif "banneradmin" in urls[i] and urls[i].endswith("BannerAccessMgmt"):
         urls[i] += ".ws/saml/login"
 
 
-for url in urls:
-    print(url)
+print("Opening Browser Now")
+
+
+
+
 # Setup Selenium WebDriver for Chrome in incognito mode
 options = webdriver.ChromeOptions()
 options.add_argument("--incognito")
@@ -69,6 +77,17 @@ pyautogui.typewrite("\n")
 sleep(3)
 pyautogui.typewrite(appnav_password)
 pyautogui.typewrite("\n")
+
+
+
+
+
+
+
+
+
+
+
 input("Press Enter after you have logged in successfully...")
 
 # Open all remaining URLs in new tabs
@@ -88,6 +107,24 @@ for i, handle in enumerate(driver.window_handles):
     driver.switch_to.window(handle)
     sleep(1)  # Optional: Wait for any dynamic content to finish loading
     url = driver.current_url
+
+
+    if "etranscriptapi" in url.lower():
+        username_input = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.NAME, "username"))  # Replace 'identifier' with the actual attribute of the element
+        )
+
+        # Type a string into the input field
+        username_input.send_keys(api_username)
+
+
+        password_input = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.ID, "password"))  # Replace 'input-password' with the correct identifier
+        )
+        password_input.send_keys(api_password)
+        sleep(5)
+
+
 
     # Take a screenshot before entering credentials
     screenshot_path = os.path.join(screenshot_dir, f"screenshot{i+1}.png")
